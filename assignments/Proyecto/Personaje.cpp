@@ -1,10 +1,11 @@
 #include <iostream>
 #include <string>
-#include <algorithm> // Para std::max
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 
-// Clase base: Unidad
+// Clase base abstracta: Unidad
 class Unidad {
 protected:
     int vida, salud, ataque, nivel;
@@ -21,8 +22,7 @@ public:
     virtual void RecibeAtaque(int valorDeAtaque) {
         vida = max(vida - valorDeAtaque, 0);
         cout << "Unidad recibió " << valorDeAtaque << " de daño. Vida restante: " << vida << endl;
-        if (vida == 0)
-            cout << "Unidad ha muerto.\n";
+        if (!estaVivo()) cout << "Unidad ha muerto.\n";
     }
 
     virtual void Imprimir() const {
@@ -42,7 +42,16 @@ public:
 
     int GetVida() const { return vida; }
     void SetVida(int v) { vida = max(0, v); }
+
+    virtual bool estaVivo() const = 0;
+    virtual ~Unidad() {}
 };
+
+// Sobrecarga del operador de flujo
+ostream& operator<<(ostream& os, const Unidad& u) {
+    u.Imprimir();
+    return os;
+}
 
 // Clase Max (Guerrero)
 class Max : public Unidad {
@@ -64,11 +73,16 @@ public:
         int final = valor - reduccion;
         vida = max(vida - final, 0);
         cout << "Max bloqueó parte del daño y solo recibió " << final << ". Vida: " << vida << endl;
+        if (!estaVivo()) cout << "Max ha muerto con honor.\n";
     }
 
     void Imprimir() const override {
         cout << "Soy Max (Guerrero). Fuerza extra: " << fuerza << endl;
         Unidad::Imprimir();
+    }
+
+    bool estaVivo() const override {
+        return vida > 0 && fuerza > 10;
     }
 };
 
@@ -92,11 +106,22 @@ public:
         int final = max(0, valor - reduccion);
         vida = max(vida - final, 0);
         cout << "Fudz usó magia defensiva. Recibió solo " << final << " de daño. Vida: " << vida << endl;
+        if (!estaVivo()) cout << "Fudz se quedó sin maná y murió. ✨\n";
     }
 
     void Imprimir() const override {
         cout << "Soy Fudz (Mago). Hafudzzz mágico: " << Hafudzzz << endl;
         Unidad::Imprimir();
+    }
+
+    bool estaVivo() const override {
+        if (vida <= 0 && Hafudzzz >= 20) {
+            cout << "Fudz usó su último Hafudzzz para revivir con 10 de vida.\n";
+            const_cast<Fudz*>(this)->vida = 10;
+            const_cast<Fudz*>(this)->Hafudzzz -= 20;
+            return true;
+        }
+        return vida > 0;
     }
 };
 
@@ -119,36 +144,43 @@ public:
         int final = valor - bloqueo;
         vida = max(vida - final, 0);
         cout << "Noob recibió " << final << " de daño tras bloquear un poco. Vida: " << vida << endl;
+        if (!estaVivo()) cout << "Noob murió ayudando a los demás 💀\n";
     }
 
     void Imprimir() const override {
         cout << "Soy Noob (Sanador). Solo quiero ayudarte 💖\n";
         Unidad::Imprimir();
     }
+
+    bool estaVivo() const override {
+        return vida > 0 && salud > 20;
+    }
 };
 
-// MAIN
+// MAIN actualizado con vector y sobrecarga
 int main() {
-    Max guerrero(100, 100, 10, 1, 20);
-    Fudz mago(100, 100, 8, 1, 30);
-    Noob sanador(100, 100, 5, 1);
+    vector<Unidad*> personajes;
+    personajes.push_back(new Max(100, 100, 10, 1, 20));
+    personajes.push_back(new Fudz(100, 100, 8, 1, 30));
+    personajes.push_back(new Noob(100, 100, 5, 1));
 
-    guerrero.Imprimir();
-    mago.Imprimir();
-    sanador.Imprimir();
+    cout << "--- Estado inicial ---\n";
+    for (auto p : personajes)
+        cout << *p << endl;
 
     cout << "\n--- Batalla ---\n";
+    personajes[0]->Atacar(*personajes[1]);
+    cout << *personajes[1] << endl;
 
-    guerrero.Atacar(mago);
-    mago.Atacar(guerrero);
-
-    sanador.CareToMuch(guerrero, 15);  // Noob cura a Max
+    personajes[0]->Atacar(*personajes[2]);
+    cout << *personajes[2] << endl;
 
     cout << "\n--- Estado final ---\n";
-    guerrero.Imprimir();
-    mago.Imprimir();
-    sanador.Imprimir();
+    for (auto p : personajes)
+        cout << *p << endl;
+
+    for (auto p : personajes)
+        delete p;
 
     return 0;
 }
-
