@@ -27,7 +27,7 @@ public:
 
     virtual void Imprimir() const {
         cout << "Vida: " << vida << ", Salud: " << salud << ", Ataque: " << ataque << ", Nivel: " << nivel << endl;
-        BarraDeVida(); // 🟢 muestra la barra de vida
+        BarraDeVida(); 
     }
 
     void BarraDeVida() const {
