@@ -27,6 +27,17 @@ public:
 
     virtual void Imprimir() const {
         cout << "Vida: " << vida << ", Salud: " << salud << ", Ataque: " << ataque << ", Nivel: " << nivel << endl;
+        BarraDeVida(); // 🟢 muestra la barra de vida
+    }
+
+    void BarraDeVida() const {
+        cout << "Vida: " << vida << "/100" << endl;
+        int llena = vida;
+        int vacia = 100 - vida;
+
+        for (int i = 0; i < llena; ++i) cout << "█";
+        for (int i = 0; i < vacia; ++i) cout << "░";
+        cout << "\n";
     }
 
     int GetVida() const { return vida; }
@@ -116,6 +127,7 @@ public:
     }
 };
 
+// MAIN
 int main() {
     Max guerrero(100, 100, 10, 1, 20);
     Fudz mago(100, 100, 8, 1, 30);
