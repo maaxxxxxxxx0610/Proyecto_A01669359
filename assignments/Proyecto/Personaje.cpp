@@ -10,6 +10,14 @@ class Unidad {
 protected:
     int vida, salud, ataque, nivel;
 
+    virtual void ImprimirEnStream(ostream& os) const {
+        os << "Vida: " << vida << ", Salud: " << salud << ", Ataque: " << ataque << ", Nivel: " << nivel << "\n";
+        os << "Barra de vida: ";
+        for (int i = 0; i < vida; ++i) os << "█";
+        for (int i = 0; i < 100 - vida; ++i) os << "░";
+        os << "\n";
+    }
+
 public:
     Unidad(int vida = 100, int salud = 100, int ataque = 7, int nivel = 1)
         : vida(vida), salud(salud), ataque(ataque), nivel(nivel) {}
@@ -26,18 +34,7 @@ public:
     }
 
     virtual void Imprimir() const {
-        cout << "Vida: " << vida << ", Salud: " << salud << ", Ataque: " << ataque << ", Nivel: " << nivel << endl;
-        BarraDeVida(); 
-    }
-
-    void BarraDeVida() const {
-        cout << "Vida: " << vida << "/100" << endl;
-        int llena = vida;
-        int vacia = 100 - vida;
-
-        for (int i = 0; i < llena; ++i) cout << "█";
-        for (int i = 0; i < vacia; ++i) cout << "░";
-        cout << "\n";
+        cout << *this;
     }
 
     int GetVida() const { return vida; }
@@ -45,11 +42,13 @@ public:
 
     virtual bool estaVivo() const = 0;
     virtual ~Unidad() {}
+
+    friend ostream& operator<<(ostream& os, const Unidad& u);
 };
 
-// Sobrecarga del operador de flujo
+// Sobrecarga del operador de flujo corregida
 ostream& operator<<(ostream& os, const Unidad& u) {
-    u.Imprimir();
+    u.ImprimirEnStream(os);
     return os;
 }
 
@@ -57,6 +56,12 @@ ostream& operator<<(ostream& os, const Unidad& u) {
 class Max : public Unidad {
 private:
     int fuerza;
+
+protected:
+    void ImprimirEnStream(ostream& os) const override {
+        os << "Soy Max (Guerrero). Fuerza extra: " << fuerza << "\n";
+        Unidad::ImprimirEnStream(os);
+    }
 
 public:
     Max(int vida, int salud, int ataque, int nivel, int fuerza)
@@ -76,11 +81,6 @@ public:
         if (!estaVivo()) cout << "Max ha muerto con honor.\n";
     }
 
-    void Imprimir() const override {
-        cout << "Soy Max (Guerrero). Fuerza extra: " << fuerza << endl;
-        Unidad::Imprimir();
-    }
-
     bool estaVivo() const override {
         return vida > 0 && fuerza > 10;
     }
@@ -90,6 +90,12 @@ public:
 class Fudz : public Unidad {
 private:
     int Hafudzzz;
+
+protected:
+    void ImprimirEnStream(ostream& os) const override {
+        os << "Soy Fudz (Mago). Hafudzzz mágico: " << Hafudzzz << "\n";
+        Unidad::ImprimirEnStream(os);
+    }
 
 public:
     Fudz(int vida, int salud, int ataque, int nivel, int Hafudzzz)
@@ -109,11 +115,6 @@ public:
         if (!estaVivo()) cout << "Fudz se quedó sin maná y murió. ✨\n";
     }
 
-    void Imprimir() const override {
-        cout << "Soy Fudz (Mago). Hafudzzz mágico: " << Hafudzzz << endl;
-        Unidad::Imprimir();
-    }
-
     bool estaVivo() const override {
         if (vida <= 0 && Hafudzzz >= 20) {
             cout << "Fudz usó su último Hafudzzz para revivir con 10 de vida.\n";
@@ -127,6 +128,12 @@ public:
 
 // Clase Noob (Sanador)
 class Noob : public Unidad {
+protected:
+    void ImprimirEnStream(ostream& os) const override {
+        os << "Soy Noob (Sanador). Solo quiero ayudarte 💖\n";
+        Unidad::ImprimirEnStream(os);
+    }
+
 public:
     Noob(int vida, int salud, int ataque, int nivel)
         : Unidad(vida, salud, ataque, nivel) {}
@@ -147,40 +154,44 @@ public:
         if (!estaVivo()) cout << "Noob murió ayudando a los demás 💀\n";
     }
 
-    void Imprimir() const override {
-        cout << "Soy Noob (Sanador). Solo quiero ayudarte 💖\n";
-        Unidad::Imprimir();
-    }
-
     bool estaVivo() const override {
         return vida > 0 && salud > 20;
     }
 };
 
-// MAIN actualizado con vector y sobrecarga
 int main() {
     vector<Unidad*> personajes;
+
     personajes.push_back(new Max(100, 100, 10, 1, 20));
     personajes.push_back(new Fudz(100, 100, 8, 1, 30));
     personajes.push_back(new Noob(100, 100, 5, 1));
 
-    cout << "--- Estado inicial ---\n";
+    cout << "\n========== ESTADO INICIAL ==========\n";
     for (auto p : personajes)
         cout << *p << endl;
 
-    cout << "\n--- Batalla ---\n";
-    personajes[0]->Atacar(*personajes[1]);
-    cout << *personajes[1] << endl;
+    cout << "\n========== ¡COMIENZA LA BATALLA! ==========\n";
 
-    personajes[0]->Atacar(*personajes[2]);
-    cout << *personajes[2] << endl;
+    try {
+        if (!personajes[1]->estaVivo()) throw runtime_error("Fudz ya está muerto. No puedes atacarlo.");
+        personajes[0]->Atacar(*personajes[1]);
+        cout << *personajes[1] << endl;
 
-    cout << "\n--- Estado final ---\n";
+        if (!personajes[2]->estaVivo()) throw runtime_error("Noob ya está muerto. No puedes atacarlo.");
+        personajes[0]->Atacar(*personajes[2]);
+        cout << *personajes[2] << endl;
+
+    } catch (const exception& e) {
+        cerr << "⚠️ EXCEPCIÓN: " << e.what() << "\n";
+    }
+
+    cout << "\n========== ESTADO FINAL ==========\n";
     for (auto p : personajes)
         cout << *p << endl;
 
     for (auto p : personajes)
         delete p;
 
+    cout << "\nFin de la simulación. Que ganen los mejores...\n";
     return 0;
 }
